@@ -1,0 +1,93 @@
+mport time
+
+def print_delay(text, delay=1.5):
+    print(text)
+    time.sleep(delay)
+
+def play_game():
+    print("==================================================")
+    print("      THE GREAT DIGESTIVE JOURNEY OF BACTERI-BOY  ")
+    print("==================================================")
+    print_delay("You are a tiny, friendly bacterium chilling on a piece of bread.")
+    print_delay("CHOMP! A human eats the bread, and your journey begins...")
+    print("--------------------------------------------------\n")
+
+    # List of questions: (Organ, Question, Options, Correct_Letter, Success_Message)
+    journey = [
+        {
+            "organ": "The Mouth",
+            "question": "As you enter the mouth, teeth start crushing the bread, and an enzyme called amylase breaks down starch. What type of digestion is happening here?",
+            "options": ["A) Only mechanical digestion", "B) Only chemical digestion", "C) Both mechanical and chemical digestion", "D) No digestion at all"],
+            "correct": "C",
+            "success": "Correct! Teeth do the mechanical work, and saliva does the chemical work. Down the esophagus esophagus-elevator we go!"
+        },
+        {
+            "organ": "The Stomach",
+            "question": "Splash! You've landed in a pool of highly acidic gastric juice. What is the main job of the stomach?",
+            "options": ["A) To absorb water into the body", "B) To break down proteins using acid and enzymes", "C) To breathe oxygen", "D) To turn food into solid waste immediately"],
+            "correct": "B",
+            "success": "Spot on! The stomach uses hydrochloric acid and pepsin to break down proteins into a soupy mix called chyme."
+        },
+        {
+            "organ": "The Small Intestine (Part 1)",
+            "question": "You enter a long, winding tube where most chemical digestion happens. The liver sends a fluid here to help break down fats. What is this fluid called?",
+            "options": ["A) Bile", "B) Saliva", "C) Insulin", "D) Water"],
+            "correct": "A",
+            "success": "Awesome! Bile is stored in the gallbladder and helps emulsify fats in the small intestine."
+        },
+        {
+            "organ": "The Small Intestine (Part 2)",
+            "question": "As you cruise along, you notice the walls are covered in tiny, finger-like bumps. What are these bumps called, and what do they do?",
+            "options": ["A) Teeth - they chew the food more", "B) Cilia - they trap dirt", "C) Villi - they absorb nutrients into the blood", "D) Pores - they sweat out waste"],
+            "correct": "C",
+            "success": "Correct! Villi vastly increase the surface area so the body can absorb all the good nutrients from the bread."
+        },
+        {
+            "organ": "The Large Intestine",
+            "question": "Most nutrients are gone, and now you are entering a wider, shorter tube. What is the primary function of the large intestine?",
+            "options": ["A) To digest proteins", "B) To absorb remaining water and form solid waste", "C) To make stomach acid", "D) To mix food with saliva"],
+            "correct": "B",
+            "success": "Exactly! The large intestine sucks out the water, turning what's left into solid waste (poo)."
+        },
+        {
+            "organ": "The Rectum & Anus",
+            "question": "You've reached the final stop. The waste is stored here until it's time to leave the body. What is the name of this storage area right before the anus?",
+            "options": ["A) The Esophagus", "B) The Appendix", "C) The Rectum", "D) The Liver"],
+            "correct": "C",
+            "success": "You nailed it! The rectum stores the waste until it's ready to exit."
+        }
+    ]
+
+    # Game Loop through the organs
+    for step, stage in enumerate(journey, 1):
+        print(f"--- STAGE {step}: {stage['organ']} ---")
+        print_delay(stage['question'], 1.0)
+        
+        for option in stage['options']:
+            print(option)
+        
+        # Validation loop for user input
+        while True:
+            answer = input("\nYour answer (A, B, C, or D): ").strip().upper()
+            if answer in ["A", "B", "C", "D"]:
+                if answer == stage['correct']:
+                    print_delay(f"\n✨ {stage['success']}\n")
+                    break
+                else:
+                    print("Ouch! That's not quite right. The bacteria is stuck! Try again.")
+            else:
+                print("Invalid choice. Please type A, B, C, or D.")
+        
+        print("-" * 50)
+
+    # Ending Message
+    print_delay("PLOP!")
+    print_delay("Congratulations! You and the remains of the bread have successfully passed through the entire digestive tract.")
+    print_delay("You have exited the anus and safely made it to the toilet bowl. Mission accomplished, little bacteria!")
+    print("==================================================")
+    print("                    GAME OVER                     ")
+    print("==================================================")
+
+# Run the game
+if __name__ == "__main__":
+    play_game()
