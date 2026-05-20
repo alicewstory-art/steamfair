@@ -1,93 +1,356 @@
-import time
-
-def print_delay(text, delay=1.5):
-    print(text)
-    time.sleep(delay)
-
-def play_game():
-    print("==================================================")
-    print("      THE GREAT DIGESTIVE JOURNEY OF BACTERI-BOY  ")
-    print("==================================================")
-    print_delay("You are a tiny, friendly bacterium chilling on a piece of bread.")
-    print_delay("CHOMP! A human eats the bread, and your journey begins...")
-    print("--------------------------------------------------\n")
-
-    # List of questions: (Organ, Question, Options, Correct_Letter, Success_Message)
-    journey = [
-        {
-            "organ": "The Mouth",
-            "question": "As you enter the mouth, teeth start crushing the bread, and an enzyme called amylase breaks down starch. What type of digestion is happening here?",
-            "options": ["A) Only mechanical digestion", "B) Only chemical digestion", "C) Both mechanical and chemical digestion", "D) No digestion at all"],
-            "correct": "C",
-            "success": "Correct! Teeth do the mechanical work, and saliva does the chemical work. Down the esophagus esophagus-elevator we go!"
-        },
-        {
-            "organ": "The Stomach",
-            "question": "Splash! You've landed in a pool of highly acidic gastric juice. What is the main job of the stomach?",
-            "options": ["A) To absorb water into the body", "B) To break down proteins using acid and enzymes", "C) To breathe oxygen", "D) To turn food into solid waste immediately"],
-            "correct": "B",
-            "success": "Spot on! The stomach uses hydrochloric acid and pepsin to break down proteins into a soupy mix called chyme."
-        },
-        {
-            "organ": "The Small Intestine (Part 1)",
-            "question": "You enter a long, winding tube where most chemical digestion happens. The liver sends a fluid here to help break down fats. What is this fluid called?",
-            "options": ["A) Bile", "B) Saliva", "C) Insulin", "D) Water"],
-            "correct": "A",
-            "success": "Awesome! Bile is stored in the gallbladder and helps emulsify fats in the small intestine."
-        },
-        {
-            "organ": "The Small Intestine (Part 2)",
-            "question": "As you cruise along, you notice the walls are covered in tiny, finger-like bumps. What are these bumps called, and what do they do?",
-            "options": ["A) Teeth - they chew the food more", "B) Cilia - they trap dirt", "C) Villi - they absorb nutrients into the blood", "D) Pores - they sweat out waste"],
-            "correct": "C",
-            "success": "Correct! Villi vastly increase the surface area so the body can absorb all the good nutrients from the bread."
-        },
-        {
-            "organ": "The Large Intestine",
-            "question": "Most nutrients are gone, and now you are entering a wider, shorter tube. What is the primary function of the large intestine?",
-            "options": ["A) To digest proteins", "B) To absorb remaining water and form solid waste", "C) To make stomach acid", "D) To mix food with saliva"],
-            "correct": "B",
-            "success": "Exactly! The large intestine sucks out the water, turning what's left into solid waste (poo)."
-        },
-        {
-            "organ": "The Rectum & Anus",
-            "question": "You've reached the final stop. The waste is stored here until it's time to leave the body. What is the name of this storage area right before the anus?",
-            "options": ["A) The Esophagus", "B) The Appendix", "C) The Rectum", "D) The Liver"],
-            "correct": "C",
-            "success": "You nailed it! The rectum stores the waste until it's ready to exit."
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小细菌的面包大冒险！</title>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --bg-color: #f7f9fc;
+            --text-color: #2d3436;
         }
-    ]
 
-    # Game Loop through the organs
-    for step, stage in enumerate(journey, 1):
-        print(f"--- STAGE {step}: {stage['organ']} ---")
-        print_delay(stage['question'], 1.0)
-        
-        for option in stage['options']:
-            print(option)
-        
-        # Validation loop for user input
-        while True:
-            answer = input("\nYour answer (A, B, C, or D): ").strip().upper()
-            if answer in ["A", "B", "C", "D"]:
-                if answer == stage['correct']:
-                    print_delay(f"\n✨ {stage['success']}\n")
-                    break
-                else:
-                    print("Ouch! That's not quite right. The bacteria is stuck! Try again.")
-            else:
-                print("Invalid choice. Please type A, B, C, or D.")
-        
-        print("-" * 50)
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    # Ending Message
-    print_delay("PLOP!")
-    print_delay("Congratulations! You and the remains of the bread have successfully passed through the entire digestive tract.")
-    print_delay("You have exited the anus and safely made it to the toilet bowl. Mission accomplished, little bacteria!")
-    print("==================================================")
-    print("                    GAME OVER                     ")
-    print("==================================================")
+        #game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-sizing: border-box;
+        }
 
-# Run the game
-if __name__ == "__main__":
-    play_game()
+        h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-top: 0;
+        }
+
+        .progress-bar {
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            height: 12px;
+            width: 100%;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress {
+            background-color: var(--secondary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        #organ-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        #story-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4a5568;
+            margin-bottom: 25px;
+            min-height: 60px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #edf2f7;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .option-btn:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background-color: #c6f6d5;
+            border-color: #38a169;
+            color: #22543d;
+        }
+
+        .option-btn.wrong {
+            background-color: #fed7d7;
+            border-color: #e53e3e;
+            color: #742a2a;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 16px;
+        }
+
+        .success-text { color: #38a169; }
+        .error-text { color: #e53e3e; }
+
+        #next-btn {
+            margin-top: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        #next-btn:hover {
+            background-color: #ff5252;
+        }
+
+        /* 搞怪角色动效 */
+        .character {
+            font-size: 50px;
+            margin-bottom: 10px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="character" id="char-avatar">🦠</div>
+    <h1 id="game-header">消化系统大冒险</h1>
+    
+    <div class="progress-bar">
+        <div class="progress" id="game-progress"></div>
+    </div>
+
+    <div id="game-content">
+        <div id="organ-title">第一站：口腔</div>
+        <p id="story-text">加载中...</p >
+
+        <div class="options-container" id="options-box">
+            </div>
+
+        <div id="feedback"></div>
+        <button id="next-btn" onclick="nextStage()">出发去下一站 ➔</button>
+    </div>
+</div>
+
+<script>
+    // 关卡数据（适合Grade 8难度）
+    const journeyData = [
+        {
+            avatar: "🍞",
+            organ: "起点：面包上的细菌",
+            story: "你是一只快乐的小细菌，正呆在香喷喷的面包上。突然，人类张开大嘴把你和面包一起咬了进去！旅程开始了！",
+            question: "在口腔里，牙齿把面包嚼碎，唾液里的淀粉酶开始消化淀粉。这属于什么消化方式？",
+            options: [
+                "A) 只有物理性消化（机械消化）",
+                "B) 只有化学性消化",
+                "C) 既有物理性消化，又有化学性消化",
+                "D) 没有发生任何消化"
+            ],
+            correct: 2, // 对应选项C
+            successMsg: "太棒了！牙齿咀嚼是物理消化，唾液酶是化学消化。顺着食道滑下去吧！"
+        },
+        {
+            avatar: "🤢",
+            organ: "第二站：胃",
+            story: "扑通！你掉进了一个充满强酸性胃液的大池子里，周围的肌肉还在不断揉挤你。",
+            question: "胃液里含有盐酸和胃蛋白酶，请问胃的主要功能是什么？",
+            options: [
+                "A) 吸收大部分的水分",
+                "B) 初步消化蛋白质",
+                "C) 把食物直接变成粪便",
+                "D) 制造红细胞"
+            ],
+            correct: 1, // 对应选项B
+            successMsg: "完全正确！胃主要负责初步消化蛋白质。现在面包变成了糊糊（食糜），我们要进入肠道了！"
+        },
+        {
+            avatar: "🧪",
+            organ: "第三站：小肠（前半段）",
+            story: "你来到了一条长长弯弯的管道。这时，肝脏派来了一种液体帮你一起注入这里来分解脂肪。",
+            question: "这种由肝脏分泌、储存在胆囊中，用来把脂肪变成微粒的液体叫什么？",
+            options: [
+                "A) 胆汁",
+                "B) 胃液",
+                "C) 胰液",
+                "D) 肠液"
+            ],
+            correct: 0, // 对应选项A
+            successMsg: "真聪明！胆汁不含消化酶，但能像洗洁精一样把脂肪乳化成微粒！"
+        },
+        {
+            avatar: "🍇",
+            organ: "第四站：小肠（后半段）",
+            story: "你在小肠里继续漂流，发现四周的肠壁上长满了像小手指一样密密麻麻的结构。",
+            question: "这些小突起叫做‘小肠绒毛’，它们的主要作用是什么？",
+            options: [
+                "A) 像牙齿一样继续磨碎食物",
+                "B) 保护肠壁不被细菌吃掉",
+                "C) 大大增加表面积，用来吸收营养物质",
+                "D) 帮身体排出多余的水分"
+            ],
+            correct: 2, // 对应选项C
+            successMsg: "答对了！小肠绒毛极大地增加了吸收面积，面包的营养全被这里吸收进血液啦！"
+        },
+        {
+            avatar: "🧱",
+            organ: "第五站：大肠",
+            story: "大部分营养都被吸干了，你和剩下的残渣来到了一个更宽但更短的管子里，这里变得越来越干……",
+            question: "大肠最主要的功能是什么？",
+            options: [
+                "A) 吸收剩下的水分，形成粪便",
+                "B) 消化剩下的全部蛋白质",
+                "C) 分泌大量的消化酶",
+                "D) 产生胃酸"
+            ],
+            correct: 0, // 对应选项A
+            successMsg: "没错！大肠把水分吸走，剩下的面包残渣和你就变成了……粑粑（粪便）！"
+        },
+        {
+            avatar: "💩",
+            organ: "终点站：直肠与肛门",
+            story: "你已经被打包成了便便的一部分，在最后的密室里静静等待人类‘召唤’的时刻。",
+            question: "在粪便通过肛门排出体外之前，负责暂时储存粪便的器官叫什么？",
+            options: [
+                "A) 盲肠",
+                "B) 食道",
+                "C) 肝脏",
+                "D) 直肠"
+            ],
+            correct: 3, // 对应选项D
+            successMsg: "完全正确！直肠是临时的储存库！"
+        }
+    ];
+
+    let currentStage = 0;
+    let hasAnswered = false;
+
+    // 初始化游戏
+    function loadStage() {
+        hasAnswered = false;
+        const data = journeyData[currentStage];
+        
+        // 更新UI
+        document.getElementById("char-avatar").innerText = data.avatar;
+        document.getElementById("organ-title").innerText = data.organ;
+        document.getElementById("story-text").innerHTML = `<strong>情境：</strong>${data.story}<br><br><strong>问题：</strong>${data.question}`;
+        document.getElementById("feedback").innerText = "";
+        document.getElementById("next-btn").style.display = "none";
+        
+        // 更新进度条
+        const progressPercent = (currentStage / journeyData.length) * 100;
+        document.getElementById("game-progress").style.width = `${progressPercent}%`;
+
+        // 渲染选项
+        const optionsBox = document.getElementById("options-box");
+        optionsBox.innerHTML = "";
+        data.options.forEach((option, index) => {
+            const button = document.createElement("button");
+            button.className = "option-btn";
+            button.innerText = option;
+            button.onclick = () => checkAnswer(index, button);
+            optionsBox.appendChild(button);
+        });
+    }
+
+    // 检查答案
+    function checkAnswer(selectedIndex, clickedBtn) {
+        if (hasAnswered) return; // 防止重复点击
+
+        const data = journeyData[currentStage];
+        const feedback = document.getElementById("feedback");
+        const buttons = document.querySelectorAll(".option-btn");
+
+        if (selectedIndex === data.correct) {
+            hasAnswered = true;
+            clickedBtn.classList.add("correct");
+            feedback.innerHTML = `<span class="success-text">✨ ${data.successMsg}</span>`;
+            document.getElementById("next-btn").style.display = "block";
+        } else {
+            clickedBtn.classList.add("wrong");
+            feedback.innerHTML = `<span class="error-text">❌ 哎呀，答错了！小细菌卡在管道里了，再想一想！</span>`;
+            // 答错后允许继续点击其他选项，直到答对
+            setTimeout(() => {
+                clickedBtn.classList.remove("wrong");
+            }, 1000);
+        }
+    }
+
+    // 下一关或结束
+    function nextStage() {
+        currentStage++;
+        if (currentStage < journeyData.length) {
+            loadStage();
+        } else {
+            showGameOver();
+        }
+    }
+
+    // 游戏通关画面
+    function showGameOver() {
+        document.getElementById("game-progress").style.width = "100%";
+        document.getElementById("char-avatar").innerText = "🚽";
+        document.getElementById("char-avatar").style.animation = "none";
+        document.getElementById("organ-title").innerText = "噗通！旅程结束！";
+        document.getElementById("story-text").innerHTML = `
+            <strong>噗通！</strong><br><br>
+            恭喜你！你和面包残渣一起顺利通过了人类整个消化道！<br>
+            你已经从<strong>肛门</strong>安全地排进了马桶里，变成了一坨合格的便便。<br>
+            完美的旅行，小细菌！你对初二生物消化系统的掌握拿到了满分！
+        `;
+        document.getElementById("options-box").innerHTML = "";
+        document.getElementById("feedback").innerText = "";
+        
+        // 重新开始按钮
+        const restartBtn = document.getElementById("next-btn");
+        restartBtn.innerText = "再玩一次 ↩";
+        restartBtn.style.display = "block";
+        restartBtn.onclick = () => {
+            currentStage = 0;
+            loadStage();
+        };
+    }
+
+    // 网页加载完成后自动开始游戏
+    window.onload = loadStage;
+</script>
+
+</body>
+</html>
