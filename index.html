@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digestive Dash</title>
+    <title>Digestive Dash: Full Journey</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
     <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #222; font-family: Arial, sans-serif; }
-        #game-container { box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #game-container { box-shadow: 0 0 30px rgba(0,0,0,0.9); border: 4px solid #444; border-radius: 10px; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -15,37 +15,52 @@
 <div id="game-container"></div>
 
 <script>
-// --- 1. QUIZ DATA ---
-const quizQuestions = [
+// --- 1. EXPANDED QUIZ DATA (3 Questions per Organ) ---
+const quizData = [
     {
-        organ: "Mouth & Esophagus",
-        question: "What enzyme in saliva starts breaking down carbohydrates?",
-        options: ["1) Pepsin", "2) Amylase", "3) Lipase"],
-        correct: 2
+        organ: "Level 1: Mouth & Esophagus",
+        bgColor: '#4a0e17',
+        questions: [
+            { q: "What mechanical process starts digestion in the mouth?", options: ["1) Breathing", "2) Chewing", "3) Blinking"], correct: 2 },
+            { q: "What enzyme in saliva breaks down carbohydrates?", options: ["1) Amylase", "2) Pepsin", "3) Acid"], correct: 1 },
+            { q: "What is the tube that pushes food to the stomach called?", options: ["1) Trachea", "2) Intestine", "3) Esophagus"], correct: 3 }
+        ]
     },
     {
-        organ: "Stomach",
-        question: "Which strong acid is primarily found in the stomach to dissolve food?",
-        options: ["1) Sulfuric Acid", "2) Citric Acid", "3) Hydrochloric Acid"],
-        correct: 3
+        organ: "Level 2: Stomach",
+        bgColor: '#8a2b0d',
+        questions: [
+            { q: "What strong liquid dissolves food in the stomach?", options: ["1) Water", "2) Hydrochloric Acid", "3) Bile"], correct: 2 },
+            { q: "What muscle movement churns the food here?", options: ["1) Peristalsis", "2) Flexing", "3) Shivering"], correct: 1 },
+            { q: "What enzyme in the stomach digests proteins?", options: ["1) Lipase", "2) Pepsin", "3) Saliva"], correct: 2 }
+        ]
     },
     {
-        organ: "Small Intestine",
-        question: "What are the tiny, finger-like projections that absorb nutrients here?",
-        options: ["1) Villi", "2) Cilia", "3) Flagella"],
-        correct: 1
+        organ: "Level 3: Small Intestine",
+        bgColor: '#611624',
+        questions: [
+            { q: "What is the main job of the small intestine?", options: ["1) Absorb Nutrients", "2) Store Waste", "3) Make Blood"], correct: 1 },
+            { q: "What finger-like projections absorb the nutrients?", options: ["1) Villi", "2) Cilia", "3) Tentacles"], correct: 1 },
+            { q: "Which organ sends bile to help digest fats here?", options: ["1) Heart", "2) Lungs", "3) Liver"], correct: 3 }
+        ]
     },
     {
-        organ: "Large Intestine",
-        question: "What is the main function of the large intestine?",
-        options: ["1) Break down proteins", "2) Absorb water", "3) Create bile"],
-        correct: 2
+        organ: "Level 4: Large Intestine",
+        bgColor: '#3d2010',
+        questions: [
+            { q: "What does the large intestine primarily absorb?", options: ["1) Sugar", "2) Water", "3) Protein"], correct: 2 },
+            { q: "What helpful microorganisms live here?", options: ["1) Good Bacteria", "2) Viruses", "3) Fungi"], correct: 1 },
+            { q: "What is formed in the large intestine?", options: ["1) Chyme", "2) Feces (Waste)", "3) Urine"], correct: 2 }
+        ]
     },
     {
-        organ: "Rectum & Anus",
-        question: "Where is waste stored right before it is expelled from the body?",
-        options: ["1) The Rectum", "2) The Appendix", "3) The Gallbladder"],
-        correct: 1
+        organ: "Level 5: Rectum & Anus",
+        bgColor: '#1a0b06',
+        questions: [
+            { q: "What is the function of the rectum?", options: ["1) Store waste", "2) Digest food", "3) Pump blood"], correct: 1 },
+            { q: "What type of muscle controls the exit (anus)?", options: ["1) Bicep", "2) Sphincter", "3) Cardiac"], correct: 2 },
+            { q: "What is the final process of the digestive system called?", options: ["1) Ingestion", "2) Digestion", "3) Elimination"], correct: 3 }
+        ]
     }
 ];
 
@@ -54,103 +69,115 @@ class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
         this.currentLevel = 0;
+        this.starsCollected = 0;
         this.canDoubleJump = false;
         this.isQuizActive = false;
+        this.activeStar = null;
     }
 
     preload() {
-        // Generating placeholder graphics
-        let canvas = this.textures.createCanvas('bacterium', 30, 30);
-        let ctx = canvas.getContext();
-        ctx.fillStyle = '#00ffaa'; // Friendly green bacteria
-        ctx.beginPath(); ctx.arc(15, 15, 15, 0, Math.PI * 2); ctx.fill();
-        canvas.refresh();
+        // Player Bacteria Graphic
+        let pCanvas = this.textures.createCanvas('bacterium', 30, 30);
+        let pCtx = pCanvas.getContext();
+        pCtx.fillStyle = '#00ffaa'; pCtx.beginPath(); pCtx.arc(15, 15, 15, 0, Math.PI * 2); pCtx.fill();
+        pCanvas.refresh();
 
+        // Platform Graphic
         let platCanvas = this.textures.createCanvas('platform', 200, 20);
-        let pCtx = platCanvas.getContext();
-        pCtx.fillStyle = '#aa5555'; // Flesh-colored platforms
-        pCtx.fillRect(0, 0, 200, 20);
+        let plCtx = platCanvas.getContext();
+        plCtx.fillStyle = '#aa5555'; plCtx.fillRect(0, 0, 200, 20);
         platCanvas.refresh();
 
-        let hazardCanvas = this.textures.createCanvas('hazard', 100, 20);
-        let hCtx = hazardCanvas.getContext();
-        hCtx.fillStyle = '#fffc00'; // Yellow stomach acid / toxic bad bacteria
-        hCtx.fillRect(0, 0, 100, 20);
-        hazardCanvas.refresh();
+        // Hazard Graphic
+        let hazCanvas = this.textures.createCanvas('hazard', 100, 20);
+        let hCtx = hazCanvas.getContext();
+        hCtx.fillStyle = '#fffc00'; hCtx.fillRect(0, 0, 100, 20);
+        hazCanvas.refresh();
 
-        let gateCanvas = this.textures.createCanvas('gateway', 40, 100);
-        let gCtx = gateCanvas.getContext();
-        gCtx.fillStyle = '#00d4ff'; // Blue energy gateway
-        gCtx.fillRect(0, 0, 40, 100);
-        gateCanvas.refresh();
+        // Star / Door Graphic
+        let starCanvas = this.textures.createCanvas('star', 30, 30);
+        let sCtx = starCanvas.getContext();
+        sCtx.fillStyle = '#ffd700'; 
+        sCtx.beginPath();
+        sCtx.moveTo(15, 0); sCtx.lineTo(20, 10); sCtx.lineTo(30, 15); sCtx.lineTo(20, 20);
+        sCtx.lineTo(15, 30); sCtx.lineTo(10, 20); sCtx.lineTo(0, 15); sCtx.lineTo(10, 10);
+        sCtx.fill();
+        starCanvas.refresh();
     }
 
     create() {
-        // Controls
         this.cursors = this.input.keyboard.createCursorKeys();
         this.key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
         this.key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
         this.key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
 
-        // UI Texts
-        this.levelText = this.add.text(16, 16, '', { fontSize: '24px', fill: '#fff' }).setDepth(10);
-        this.instructionText = this.add.text(16, 50, 'Arrows: Move | UP: Jump/Double Jump', { fontSize: '16px', fill: '#ccc' }).setDepth(10);
+        this.uiText = this.add.text(16, 16, '', { fontSize: '24px', fill: '#fff', fontStyle: 'bold' }).setDepth(10);
+        this.progressText = this.add.text(16, 50, '', { fontSize: '18px', fill: '#ffd700' }).setDepth(10);
         
+        // Quiz UI Container
         this.quizContainer = this.add.container(400, 300).setDepth(20).setVisible(false);
-        let quizBg = this.add.rectangle(0, 0, 600, 200, 0x000000, 0.9);
-        this.quizText = this.add.text(0, -60, 'Quiz Question', { fontSize: '20px', fill: '#fff', align: 'center', wordWrap: { width: 550 } }).setOrigin(0.5);
-        this.optionsText = this.add.text(0, 20, 'Options', { fontSize: '18px', fill: '#ffcc00', align: 'center' }).setOrigin(0.5);
-        this.quizContainer.add([quizBg, this.quizText, this.optionsText]);
+        let quizBg = this.add.rectangle(0, 0, 600, 250, 0x000000, 0.95);
+        quizBg.setStrokeStyle(4, 0xffd700);
+        this.quizTitle = this.add.text(0, -90, 'QUIZ TIME!', { fontSize: '24px', fill: '#ffd700', fontStyle: 'bold' }).setOrigin(0.5);
+        this.quizText = this.add.text(0, -30, 'Question', { fontSize: '20px', fill: '#fff', align: 'center', wordWrap: { width: 550 } }).setOrigin(0.5);
+        this.optionsText = this.add.text(0, 40, 'Options', { fontSize: '18px', fill: '#aaa', align: 'center' }).setOrigin(0.5);
+        this.hintText = this.add.text(0, 100, '(Press 1, 2, or 3 to answer)', { fontSize: '14px', fill: '#555' }).setOrigin(0.5);
+        this.quizContainer.add([quizBg, this.quizTitle, this.quizText, this.optionsText, this.hintText]);
 
         this.buildLevel();
     }
 
     buildLevel() {
-        if (this.currentLevel >= quizQuestions.length) {
-            this.levelText.setText("YOU ESCAPED! YOU WIN!");
+        if (this.currentLevel >= quizData.length) {
+            this.uiText.setText("CONGRATULATIONS! YOU ESCAPED!");
+            this.progressText.setText("You have mastered the Digestive System!");
             this.physics.pause();
             return;
         }
 
-        // Clean up previous level
+        this.starsCollected = 0;
+        let levelInfo = quizData[this.currentLevel];
+        
+        this.cameras.main.setBackgroundColor(levelInfo.bgColor);
+        this.uiText.setText(levelInfo.organ);
+        this.updateProgressText();
+
         if (this.platforms) this.platforms.clear(true, true);
         if (this.hazards) this.hazards.clear(true, true);
-        if (this.gateway) this.gateway.destroy();
+        if (this.starsGroup) this.starsGroup.clear(true, true);
         if (this.player) this.player.destroy();
-
-        let levelData = quizQuestions[this.currentLevel];
-        this.levelText.setText(`Level ${this.currentLevel + 1}: ${levelData.organ}`);
-        
-        // Background color shifts as you go deeper
-        let bgColors = ['#4a0e17', '#8a2b0d', '#611624', '#3d2010', '#1a0b06'];
-        this.cameras.main.setBackgroundColor(bgColors[this.currentLevel]);
 
         this.platforms = this.physics.add.staticGroup();
         this.hazards = this.physics.add.staticGroup();
+        this.starsGroup = this.physics.add.staticGroup();
 
-        // Level Design (Procedural layout for demonstration)
+        // Level Layout
         this.platforms.create(100, 500, 'platform');
-        this.platforms.create(400, 400, 'platform');
-        this.platforms.create(700, 300, 'platform');
+        this.platforms.create(350, 400, 'platform');
+        this.platforms.create(650, 300, 'platform');
+        this.platforms.create(150, 200, 'platform');
         this.platforms.create(400, 580, 'platform').setScale(4, 1).refreshBody(); // Floor
 
-        // Hazards (Acid / Bad Bacteria)
+        // Hazards
         this.hazards.create(400, 560, 'hazard');
-        
-        // Player
+
+        // Place 3 Stars in the level
+        this.starsGroup.create(350, 350, 'star');
+        this.starsGroup.create(650, 250, 'star');
+        this.starsGroup.create(150, 150, 'star');
+
+        // Player setup
         this.player = this.physics.add.sprite(50, 400, 'bacterium');
         this.player.setCollideWorldBounds(true);
-        this.player.setBounce(0.2);
-
-        // Gateway to next organ
-        this.gateway = this.physics.add.sprite(750, 230, 'gateway');
-        this.gateway.setImmovable(true);
-        this.gateway.body.allowGravity = false;
 
         // Collisions
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.overlap(this.player, this.hazards, this.hitHazard, null, this);
-        this.physics.add.overlap(this.player, this.gateway, this.triggerQuiz, null, this);
+        this.physics.add.overlap(this.player, this.starsGroup, this.hitStar, null, this);
+    }
+
+    updateProgressText() {
+        this.progressText.setText(`Questions Answered: ${this.starsCollected} / 3`);
     }
 
     update() {
@@ -161,7 +188,7 @@ class MainScene extends Phaser.Scene {
 
         if (!this.player || !this.player.body) return;
 
-        // Parkour Movement Logic
+        // Parkour Mechanics
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-200);
         } else if (this.cursors.right.isDown) {
@@ -170,42 +197,40 @@ class MainScene extends Phaser.Scene {
             this.player.setVelocityX(0);
         }
 
-        // Jump and Double Jump
         let isGrounded = this.player.body.touching.down;
-        if (isGrounded) {
-            this.canDoubleJump = true;
-        }
+        if (isGrounded) this.canDoubleJump = true;
 
         if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             if (isGrounded) {
-                this.player.setVelocityY(-400); // First jump
+                this.player.setVelocityY(-400);
             } else if (this.canDoubleJump) {
-                this.player.setVelocityY(-350); // Double jump
+                this.player.setVelocityY(-350);
                 this.canDoubleJump = false;
             }
         }
     }
 
     hitHazard() {
-        // Punishment: Teleport to start of the level
+        // Minor punishment: back to start of current level
         this.player.setPosition(50, 400);
         this.player.setVelocity(0, 0);
-        this.cameras.main.shake(200, 0.01); // Quick screen shake effect
+        this.cameras.main.shake(200, 0.01);
     }
 
-    triggerQuiz() {
+    hitStar(player, star) {
         this.isQuizActive = true;
+        this.activeStar = star;
         this.physics.pause();
-        this.player.setTint(0x555555);
-
-        let qData = quizQuestions[this.currentLevel];
-        this.quizText.setText(`WARNING: GATEWAY BLOCKED!\n\n${qData.question}`);
-        this.optionsText.setText(`${qData.options.join('\n')}\n\n(Press 1, 2, or 3)`);
+        
+        let qData = quizData[this.currentLevel].questions[this.starsCollected];
+        
+        this.quizText.setText(qData.q);
+        this.optionsText.setText(qData.options.join('\n\n'));
         this.quizContainer.setVisible(true);
     }
 
     handleQuizInput() {
-        let qData = quizQuestions[this.currentLevel];
+        let qData = quizData[this.currentLevel].questions[this.starsCollected];
         let answered = 0;
 
         if (Phaser.Input.Keyboard.JustDown(this.key1)) answered = 1;
@@ -215,24 +240,40 @@ class MainScene extends Phaser.Scene {
         if (answered !== 0) {
             this.quizContainer.setVisible(false);
             this.isQuizActive = false;
-            this.physics.resume();
-            this.player.clearTint();
 
             if (answered === qData.correct) {
-                // Correct: Advance to next level
-                this.currentLevel++;
-                this.buildLevel();
+                // Correct Answer!
+                this.activeStar.destroy(); // Remove the star
+                this.starsCollected++;
+                this.updateProgressText();
+                
+                if (this.starsCollected >= 3) {
+                    // Level complete! Move to next organ
+                    this.currentLevel++;
+                    this.buildLevel();
+                } else {
+                    this.physics.resume(); // Continue current level
+                }
             } else {
-                // Incorrect: Punishment (Reset to start of level)
-                this.player.setPosition(50, 400);
-                this.player.setVelocity(0, 0);
-                // Optional: Add a text popup saying "Wrong! Try again."
+                // WRONG ANSWER: Major Punishment!
+                this.cameras.main.shake(300, 0.02);
+                
+                // Go back one whole organ (unless already at the mouth)
+                if (this.currentLevel > 0) {
+                    this.currentLevel--;
+                }
+                
+                // Rebuild the level from scratch
+                setTimeout(() => {
+                    this.physics.resume();
+                    this.buildLevel();
+                }, 400);
             }
         }
     }
 }
 
-// --- 3. GAME CONFIGURATION ---
+// --- 3. CONFIGURATION ---
 const config = {
     type: Phaser.AUTO,
     width: 800,
@@ -240,10 +281,7 @@ const config = {
     parent: 'game-container',
     physics: {
         default: 'arcade',
-        arcade: {
-            gravity: { y: 800 },
-            debug: false
-        }
+        arcade: { gravity: { y: 800 }, debug: false }
     },
     scene: [MainScene]
 };
