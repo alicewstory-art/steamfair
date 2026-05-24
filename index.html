@@ -1,356 +1,254 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小细菌的面包大冒险！</title>
+    <title>Digestive Dash</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
     <style>
-        :root {
-            --primary-color: #ff6b6b;
-            --secondary-color: #4ecdc4;
-            --bg-color: #f7f9fc;
-            --text-color: #2d3436;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        #game-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 30px;
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-
-        h1 {
-            color: var(--primary-color);
-            font-size: 24px;
-            margin-top: 0;
-        }
-
-        .progress-bar {
-            background-color: #e0e0e0;
-            border-radius: 10px;
-            height: 12px;
-            width: 100%;
-            margin: 20px 0;
-            overflow: hidden;
-        }
-
-        .progress {
-            background-color: var(--secondary-color);
-            height: 100%;
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-
-        #organ-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 10px;
-        }
-
-        #story-text {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #4a5568;
-            margin-bottom: 25px;
-            min-height: 60px;
-        }
-
-        .options-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .option-btn {
-            background-color: #edf2f7;
-            border: 2px solid transparent;
-            border-radius: 12px;
-            padding: 15px 20px;
-            font-size: 16px;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            outline: none;
-        }
-
-        .option-btn:hover {
-            background-color: #e2e8f0;
-            transform: translateY(-2px);
-        }
-
-        .option-btn.correct {
-            background-color: #c6f6d5;
-            border-color: #38a169;
-            color: #22543d;
-        }
-
-        .option-btn.wrong {
-            background-color: #fed7d7;
-            border-color: #e53e3e;
-            color: #742a2a;
-        }
-
-        #feedback {
-            margin-top: 20px;
-            font-weight: bold;
-            min-height: 24px;
-            font-size: 16px;
-        }
-
-        .success-text { color: #38a169; }
-        .error-text { color: #e53e3e; }
-
-        #next-btn {
-            margin-top: 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
-            font-size: 16px;
-            cursor: pointer;
-            display: none;
-            width: 100%;
-            font-weight: bold;
-        }
-
-        #next-btn:hover {
-            background-color: #ff5252;
-        }
-
-        /* 搞怪角色动效 */
-        .character {
-            font-size: 50px;
-            margin-bottom: 10px;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #222; font-family: Arial, sans-serif; }
+        #game-container { box-shadow: 0 0 20px rgba(0,0,0,0.8); }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div class="character" id="char-avatar">🦠</div>
-    <h1 id="game-header">消化系统大冒险</h1>
-    
-    <div class="progress-bar">
-        <div class="progress" id="game-progress"></div>
-    </div>
-
-    <div id="game-content">
-        <div id="organ-title">第一站：口腔</div>
-        <p id="story-text">加载中...</p >
-
-        <div class="options-container" id="options-box">
-            </div>
-
-        <div id="feedback"></div>
-        <button id="next-btn" onclick="nextStage()">出发去下一站 ➔</button>
-    </div>
-</div>
+<div id="game-container"></div>
 
 <script>
-    // 关卡数据（适合Grade 8难度）
-    const journeyData = [
-        {
-            avatar: "🍞",
-            organ: "起点：面包上的细菌",
-            story: "你是一只快乐的小细菌，正呆在香喷喷的面包上。突然，人类张开大嘴把你和面包一起咬了进去！旅程开始了！",
-            question: "在口腔里，牙齿把面包嚼碎，唾液里的淀粉酶开始消化淀粉。这属于什么消化方式？",
-            options: [
-                "A) 只有物理性消化（机械消化）",
-                "B) 只有化学性消化",
-                "C) 既有物理性消化，又有化学性消化",
-                "D) 没有发生任何消化"
-            ],
-            correct: 2, // 对应选项C
-            successMsg: "太棒了！牙齿咀嚼是物理消化，唾液酶是化学消化。顺着食道滑下去吧！"
-        },
-        {
-            avatar: "🤢",
-            organ: "第二站：胃",
-            story: "扑通！你掉进了一个充满强酸性胃液的大池子里，周围的肌肉还在不断揉挤你。",
-            question: "胃液里含有盐酸和胃蛋白酶，请问胃的主要功能是什么？",
-            options: [
-                "A) 吸收大部分的水分",
-                "B) 初步消化蛋白质",
-                "C) 把食物直接变成粪便",
-                "D) 制造红细胞"
-            ],
-            correct: 1, // 对应选项B
-            successMsg: "完全正确！胃主要负责初步消化蛋白质。现在面包变成了糊糊（食糜），我们要进入肠道了！"
-        },
-        {
-            avatar: "🧪",
-            organ: "第三站：小肠（前半段）",
-            story: "你来到了一条长长弯弯的管道。这时，肝脏派来了一种液体帮你一起注入这里来分解脂肪。",
-            question: "这种由肝脏分泌、储存在胆囊中，用来把脂肪变成微粒的液体叫什么？",
-            options: [
-                "A) 胆汁",
-                "B) 胃液",
-                "C) 胰液",
-                "D) 肠液"
-            ],
-            correct: 0, // 对应选项A
-            successMsg: "真聪明！胆汁不含消化酶，但能像洗洁精一样把脂肪乳化成微粒！"
-        },
-        {
-            avatar: "🍇",
-            organ: "第四站：小肠（后半段）",
-            story: "你在小肠里继续漂流，发现四周的肠壁上长满了像小手指一样密密麻麻的结构。",
-            question: "这些小突起叫做‘小肠绒毛’，它们的主要作用是什么？",
-            options: [
-                "A) 像牙齿一样继续磨碎食物",
-                "B) 保护肠壁不被细菌吃掉",
-                "C) 大大增加表面积，用来吸收营养物质",
-                "D) 帮身体排出多余的水分"
-            ],
-            correct: 2, // 对应选项C
-            successMsg: "答对了！小肠绒毛极大地增加了吸收面积，面包的营养全被这里吸收进血液啦！"
-        },
-        {
-            avatar: "🧱",
-            organ: "第五站：大肠",
-            story: "大部分营养都被吸干了，你和剩下的残渣来到了一个更宽但更短的管子里，这里变得越来越干……",
-            question: "大肠最主要的功能是什么？",
-            options: [
-                "A) 吸收剩下的水分，形成粪便",
-                "B) 消化剩下的全部蛋白质",
-                "C) 分泌大量的消化酶",
-                "D) 产生胃酸"
-            ],
-            correct: 0, // 对应选项A
-            successMsg: "没错！大肠把水分吸走，剩下的面包残渣和你就变成了……粑粑（粪便）！"
-        },
-        {
-            avatar: "💩",
-            organ: "终点站：直肠与肛门",
-            story: "你已经被打包成了便便的一部分，在最后的密室里静静等待人类‘召唤’的时刻。",
-            question: "在粪便通过肛门排出体外之前，负责暂时储存粪便的器官叫什么？",
-            options: [
-                "A) 盲肠",
-                "B) 食道",
-                "C) 肝脏",
-                "D) 直肠"
-            ],
-            correct: 3, // 对应选项D
-            successMsg: "完全正确！直肠是临时的储存库！"
-        }
-    ];
+// --- 1. QUIZ DATA ---
+const quizQuestions = [
+    {
+        organ: "Mouth & Esophagus",
+        question: "What enzyme in saliva starts breaking down carbohydrates?",
+        options: ["1) Pepsin", "2) Amylase", "3) Lipase"],
+        correct: 2
+    },
+    {
+        organ: "Stomach",
+        question: "Which strong acid is primarily found in the stomach to dissolve food?",
+        options: ["1) Sulfuric Acid", "2) Citric Acid", "3) Hydrochloric Acid"],
+        correct: 3
+    },
+    {
+        organ: "Small Intestine",
+        question: "What are the tiny, finger-like projections that absorb nutrients here?",
+        options: ["1) Villi", "2) Cilia", "3) Flagella"],
+        correct: 1
+    },
+    {
+        organ: "Large Intestine",
+        question: "What is the main function of the large intestine?",
+        options: ["1) Break down proteins", "2) Absorb water", "3) Create bile"],
+        correct: 2
+    },
+    {
+        organ: "Rectum & Anus",
+        question: "Where is waste stored right before it is expelled from the body?",
+        options: ["1) The Rectum", "2) The Appendix", "3) The Gallbladder"],
+        correct: 1
+    }
+];
 
-    let currentStage = 0;
-    let hasAnswered = false;
-
-    // 初始化游戏
-    function loadStage() {
-        hasAnswered = false;
-        const data = journeyData[currentStage];
-        
-        // 更新UI
-        document.getElementById("char-avatar").innerText = data.avatar;
-        document.getElementById("organ-title").innerText = data.organ;
-        document.getElementById("story-text").innerHTML = `<strong>情境：</strong>${data.story}<br><br><strong>问题：</strong>${data.question}`;
-        document.getElementById("feedback").innerText = "";
-        document.getElementById("next-btn").style.display = "none";
-        
-        // 更新进度条
-        const progressPercent = (currentStage / journeyData.length) * 100;
-        document.getElementById("game-progress").style.width = `${progressPercent}%`;
-
-        // 渲染选项
-        const optionsBox = document.getElementById("options-box");
-        optionsBox.innerHTML = "";
-        data.options.forEach((option, index) => {
-            const button = document.createElement("button");
-            button.className = "option-btn";
-            button.innerText = option;
-            button.onclick = () => checkAnswer(index, button);
-            optionsBox.appendChild(button);
-        });
+// --- 2. MAIN GAME SCENE ---
+class MainScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'MainScene' });
+        this.currentLevel = 0;
+        this.canDoubleJump = false;
+        this.isQuizActive = false;
     }
 
-    // 检查答案
-    function checkAnswer(selectedIndex, clickedBtn) {
-        if (hasAnswered) return; // 防止重复点击
+    preload() {
+        // Generating placeholder graphics
+        let canvas = this.textures.createCanvas('bacterium', 30, 30);
+        let ctx = canvas.getContext();
+        ctx.fillStyle = '#00ffaa'; // Friendly green bacteria
+        ctx.beginPath(); ctx.arc(15, 15, 15, 0, Math.PI * 2); ctx.fill();
+        canvas.refresh();
 
-        const data = journeyData[currentStage];
-        const feedback = document.getElementById("feedback");
-        const buttons = document.querySelectorAll(".option-btn");
+        let platCanvas = this.textures.createCanvas('platform', 200, 20);
+        let pCtx = platCanvas.getContext();
+        pCtx.fillStyle = '#aa5555'; // Flesh-colored platforms
+        pCtx.fillRect(0, 0, 200, 20);
+        platCanvas.refresh();
 
-        if (selectedIndex === data.correct) {
-            hasAnswered = true;
-            clickedBtn.classList.add("correct");
-            feedback.innerHTML = `<span class="success-text">✨ ${data.successMsg}</span>`;
-            document.getElementById("next-btn").style.display = "block";
+        let hazardCanvas = this.textures.createCanvas('hazard', 100, 20);
+        let hCtx = hazardCanvas.getContext();
+        hCtx.fillStyle = '#fffc00'; // Yellow stomach acid / toxic bad bacteria
+        hCtx.fillRect(0, 0, 100, 20);
+        hazardCanvas.refresh();
+
+        let gateCanvas = this.textures.createCanvas('gateway', 40, 100);
+        let gCtx = gateCanvas.getContext();
+        gCtx.fillStyle = '#00d4ff'; // Blue energy gateway
+        gCtx.fillRect(0, 0, 40, 100);
+        gateCanvas.refresh();
+    }
+
+    create() {
+        // Controls
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
+        this.key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
+        this.key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
+
+        // UI Texts
+        this.levelText = this.add.text(16, 16, '', { fontSize: '24px', fill: '#fff' }).setDepth(10);
+        this.instructionText = this.add.text(16, 50, 'Arrows: Move | UP: Jump/Double Jump', { fontSize: '16px', fill: '#ccc' }).setDepth(10);
+        
+        this.quizContainer = this.add.container(400, 300).setDepth(20).setVisible(false);
+        let quizBg = this.add.rectangle(0, 0, 600, 200, 0x000000, 0.9);
+        this.quizText = this.add.text(0, -60, 'Quiz Question', { fontSize: '20px', fill: '#fff', align: 'center', wordWrap: { width: 550 } }).setOrigin(0.5);
+        this.optionsText = this.add.text(0, 20, 'Options', { fontSize: '18px', fill: '#ffcc00', align: 'center' }).setOrigin(0.5);
+        this.quizContainer.add([quizBg, this.quizText, this.optionsText]);
+
+        this.buildLevel();
+    }
+
+    buildLevel() {
+        if (this.currentLevel >= quizQuestions.length) {
+            this.levelText.setText("YOU ESCAPED! YOU WIN!");
+            this.physics.pause();
+            return;
+        }
+
+        // Clean up previous level
+        if (this.platforms) this.platforms.clear(true, true);
+        if (this.hazards) this.hazards.clear(true, true);
+        if (this.gateway) this.gateway.destroy();
+        if (this.player) this.player.destroy();
+
+        let levelData = quizQuestions[this.currentLevel];
+        this.levelText.setText(`Level ${this.currentLevel + 1}: ${levelData.organ}`);
+        
+        // Background color shifts as you go deeper
+        let bgColors = ['#4a0e17', '#8a2b0d', '#611624', '#3d2010', '#1a0b06'];
+        this.cameras.main.setBackgroundColor(bgColors[this.currentLevel]);
+
+        this.platforms = this.physics.add.staticGroup();
+        this.hazards = this.physics.add.staticGroup();
+
+        // Level Design (Procedural layout for demonstration)
+        this.platforms.create(100, 500, 'platform');
+        this.platforms.create(400, 400, 'platform');
+        this.platforms.create(700, 300, 'platform');
+        this.platforms.create(400, 580, 'platform').setScale(4, 1).refreshBody(); // Floor
+
+        // Hazards (Acid / Bad Bacteria)
+        this.hazards.create(400, 560, 'hazard');
+        
+        // Player
+        this.player = this.physics.add.sprite(50, 400, 'bacterium');
+        this.player.setCollideWorldBounds(true);
+        this.player.setBounce(0.2);
+
+        // Gateway to next organ
+        this.gateway = this.physics.add.sprite(750, 230, 'gateway');
+        this.gateway.setImmovable(true);
+        this.gateway.body.allowGravity = false;
+
+        // Collisions
+        this.physics.add.collider(this.player, this.platforms);
+        this.physics.add.overlap(this.player, this.hazards, this.hitHazard, null, this);
+        this.physics.add.overlap(this.player, this.gateway, this.triggerQuiz, null, this);
+    }
+
+    update() {
+        if (this.isQuizActive) {
+            this.handleQuizInput();
+            return;
+        }
+
+        if (!this.player || !this.player.body) return;
+
+        // Parkour Movement Logic
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-200);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(200);
         } else {
-            clickedBtn.classList.add("wrong");
-            feedback.innerHTML = `<span class="error-text">❌ 哎呀，答错了！小细菌卡在管道里了，再想一想！</span>`;
-            // 答错后允许继续点击其他选项，直到答对
-            setTimeout(() => {
-                clickedBtn.classList.remove("wrong");
-            }, 1000);
+            this.player.setVelocityX(0);
+        }
+
+        // Jump and Double Jump
+        let isGrounded = this.player.body.touching.down;
+        if (isGrounded) {
+            this.canDoubleJump = true;
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+            if (isGrounded) {
+                this.player.setVelocityY(-400); // First jump
+            } else if (this.canDoubleJump) {
+                this.player.setVelocityY(-350); // Double jump
+                this.canDoubleJump = false;
+            }
         }
     }
 
-    // 下一关或结束
-    function nextStage() {
-        currentStage++;
-        if (currentStage < journeyData.length) {
-            loadStage();
-        } else {
-            showGameOver();
+    hitHazard() {
+        // Punishment: Teleport to start of the level
+        this.player.setPosition(50, 400);
+        this.player.setVelocity(0, 0);
+        this.cameras.main.shake(200, 0.01); // Quick screen shake effect
+    }
+
+    triggerQuiz() {
+        this.isQuizActive = true;
+        this.physics.pause();
+        this.player.setTint(0x555555);
+
+        let qData = quizQuestions[this.currentLevel];
+        this.quizText.setText(`WARNING: GATEWAY BLOCKED!\n\n${qData.question}`);
+        this.optionsText.setText(`${qData.options.join('\n')}\n\n(Press 1, 2, or 3)`);
+        this.quizContainer.setVisible(true);
+    }
+
+    handleQuizInput() {
+        let qData = quizQuestions[this.currentLevel];
+        let answered = 0;
+
+        if (Phaser.Input.Keyboard.JustDown(this.key1)) answered = 1;
+        if (Phaser.Input.Keyboard.JustDown(this.key2)) answered = 2;
+        if (Phaser.Input.Keyboard.JustDown(this.key3)) answered = 3;
+
+        if (answered !== 0) {
+            this.quizContainer.setVisible(false);
+            this.isQuizActive = false;
+            this.physics.resume();
+            this.player.clearTint();
+
+            if (answered === qData.correct) {
+                // Correct: Advance to next level
+                this.currentLevel++;
+                this.buildLevel();
+            } else {
+                // Incorrect: Punishment (Reset to start of level)
+                this.player.setPosition(50, 400);
+                this.player.setVelocity(0, 0);
+                // Optional: Add a text popup saying "Wrong! Try again."
+            }
         }
     }
+}
 
-    // 游戏通关画面
-    function showGameOver() {
-        document.getElementById("game-progress").style.width = "100%";
-        document.getElementById("char-avatar").innerText = "🚽";
-        document.getElementById("char-avatar").style.animation = "none";
-        document.getElementById("organ-title").innerText = "噗通！旅程结束！";
-        document.getElementById("story-text").innerHTML = `
-            <strong>噗通！</strong><br><br>
-            恭喜你！你和面包残渣一起顺利通过了人类整个消化道！<br>
-            你已经从<strong>肛门</strong>安全地排进了马桶里，变成了一坨合格的便便。<br>
-            完美的旅行，小细菌！你对初二生物消化系统的掌握拿到了满分！
-        `;
-        document.getElementById("options-box").innerHTML = "";
-        document.getElementById("feedback").innerText = "";
-        
-        // 重新开始按钮
-        const restartBtn = document.getElementById("next-btn");
-        restartBtn.innerText = "再玩一次 ↩";
-        restartBtn.style.display = "block";
-        restartBtn.onclick = () => {
-            currentStage = 0;
-            loadStage();
-        };
-    }
+// --- 3. GAME CONFIGURATION ---
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    parent: 'game-container',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 800 },
+            debug: false
+        }
+    },
+    scene: [MainScene]
+};
 
-    // 网页加载完成后自动开始游戏
-    window.onload = loadStage;
+const game = new Phaser.Game(config);
 </script>
-
 </body>
 </html>
