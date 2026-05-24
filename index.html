@@ -1,328 +1,250 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digestive Dash: 真实背景版</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+    <title>细菌奥德赛：消化道之旅</title>
     <style>
-        body { 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            background-color: #111; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        body {
+            background-color: #2c3e50;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
         }
-        /* 将游戏容器和背景图叠加在一起 */
-        #game-wrapper {
+
+        /* 游戏主舞台：挂载你的背景图 */
+        #game-container {
+            width: 500px; /* 根据你的图片比例可适当调整 */
+            height: 700px;
+            background-image: url('digestive_system.jpg');
+            background-size: cover;
+            background-position: center;
             position: relative;
-            width: 800px;
-            height: 600px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.9); 
-            border: 4px solid #444; 
-            border-radius: 10px; 
+            border: 4px solid #ecf0f1;
+            border-radius: 10px;
             overflow: hidden;
-            background-color: #000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        /* 这是你的背景图片 */
-        #bg-image {
+
+        /* 小细菌的样式（这里用了一个Emoji代替，你可以换成图片） */
+        #bacteria {
+            width: 30px;
+            height: 30px;
+            font-size: 24px;
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 50px; /* 初始位置：口腔 */
+            left: 235px;
+            transition: top 0.1s, left 0.1s;
+            z-index: 10;
+        }
+
+        /* 顶部状态栏 */
+        #status-bar {
+            width: 500px;
+            display: flex;
+            justify-content: space-between;
+            background-color: #34495e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        /* 答题弹窗（默认隐藏） */
+        #quiz-modal {
+            display: none;
+            position: absolute;
+            top: 150px;
+            left: 50px;
+            width: 400px;
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 20;
+            box-sizing: border-box;
+        }
+
+        .quiz-btn {
+            display: block;
             width: 100%;
-            height: 100%;
-            object-fit: contain; /* 保证图片比例不失真 */
-            z-index: 1;
-            opacity: 0.8; /* 稍微调暗一点点，让前景平台更清晰 */
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
         }
-        /* 这是游戏本身（将会是透明的） */
-        #game-container { 
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 2;
+
+        .quiz-btn:hover {
+            background-color: #2980b9;
+        }
+
+        #message {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-<div id="game-wrapper">
-    <img id="bg-image" src="digestive_bg.png" alt="Digestive System Background">
-    <div id="game-container"></div>
-</div>
+    <div id="status-bar">
+        <span>生命值: <span id="health">100</span> ❤️</span>
+        <span>当前位置: <span id="location">口腔</span></span>
+    </div>
 
-<script>
-// --- 1. 题库数据 (Quiz Data) ---
-const quizData = [
-    {
-        organ: "第一关: 口腔与食道 (Mouth & Esophagus)",
-        questions: [
-            { q: "口腔里什么物理过程开始了消化？", options: ["1) 呼吸", "2) 咀嚼", "3) 眨眼"], correct: 2 },
-            { q: "唾液里的什么酶可以分解碳水化合物？", options: ["1) 淀粉酶", "2) 胃蛋白酶", "3) 胃酸"], correct: 1 },
-            { q: "把食物推入胃部的管道叫什么？", options: ["1) 气管", "2) 肠道", "3) 食道"], correct: 3 }
-        ]
-    },
-    {
-        organ: "第二关: 胃 (Stomach)",
-        questions: [
-            { q: "胃里有什么强力液体用来溶解食物？", options: ["1) 水", "2) 盐酸", "3) 胆汁"], correct: 2 },
-            { q: "这里的肌肉如何运动来搅拌食物？", options: ["1) 蠕动", "2) 弯曲", "3) 颤抖"], correct: 1 },
-            { q: "胃里的什么酶用来消化蛋白质？", options: ["1) 脂肪酶", "2) 胃蛋白酶", "3) 唾液"], correct: 2 }
-        ]
-    },
-    {
-        organ: "第三关: 小肠 (Small Intestine)",
-        questions: [
-            { q: "小肠的主要工作是什么？", options: ["1) 吸收营养", "2) 储存废物", "3) 造血"], correct: 1 },
-            { q: "什么手指状的微小突起负责吸收营养？", options: ["1) 绒毛", "2) 纤毛", "3) 触手"], correct: 1 },
-            { q: "哪个器官向这里输送胆汁以消化脂肪？", options: ["1) 心脏", "2) 肺", "3) 肝脏"], correct: 3 }
-        ]
-    },
-    {
-        organ: "第四关: 大肠 (Large Intestine)",
-        questions: [
-            { q: "大肠主要吸收什么？", options: ["1) 糖分", "2) 水分", "3) 蛋白质"], correct: 2 },
-            { q: "这里住着什么有益的微生物？", options: ["1) 益生菌", "2) 病毒", "3) 真菌"], correct: 1 },
-            { q: "大肠里最终形成了什么？", options: ["1) 食糜", "2) 粪便 (废物)", "3) 尿液"], correct: 2 }
-        ]
-    },
-    {
-        organ: "第五关: 直肠与肛门 (Rectum & Anus)",
-        questions: [
-            { q: "直肠的功能是什么？", options: ["1) 储存废物", "2) 消化食物", "3) 泵血"], correct: 1 },
-            { q: "什么类型的肌肉控制出口（肛门）？", options: ["1) 二头肌", "2) 括约肌", "3) 心肌"], correct: 2 },
-            { q: "消化系统的最后一步叫什么？", options: ["1) 摄入", "2) 消化", "3) 排泄"], correct: 3 }
-        ]
-    }
-];
-
-// --- 2. 主游戏场景 ---
-class MainScene extends Phaser.Scene {
-    constructor() {
-        super({ key: 'MainScene' });
-        this.currentLevel = 0;
-        this.starsCollected = 0;
-        this.canDoubleJump = false;
-        this.isQuizActive = false;
-        this.activeStar = null;
-    }
-
-    preload() {
-        // 生成基础图形
-        let createGraphic = (key, w, h, color, drawFn) => {
-            let canvas = this.textures.createCanvas(key, w, h);
-            let ctx = canvas.getContext();
-            ctx.fillStyle = color;
-            if (drawFn) drawFn(ctx); else ctx.fillRect(0, 0, w, h);
-            canvas.refresh();
-        };
-
-        createGraphic('bacterium', 30, 30, '#00ffaa', (ctx) => { ctx.beginPath(); ctx.arc(15, 15, 15, 0, Math.PI * 2); ctx.fill(); });
-        createGraphic('platform', 150, 20, '#aa5555');
-        createGraphic('hazard', 100, 20, '#fffc00'); 
-        createGraphic('movePlat', 100, 20, '#8833aa'); 
-        createGraphic('bouncePlat', 100, 20, '#55aa55'); 
-        createGraphic('dropHazard', 15, 30, '#ff8800', (ctx) => { ctx.beginPath(); ctx.moveTo(7.5, 0); ctx.lineTo(15, 30); ctx.lineTo(0, 30); ctx.fill(); });
+    <div id="game-container">
+        <div id="bacteria">🦠</div>
         
-        createGraphic('star', 30, 30, '#ffd700', (ctx) => {
-            ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(20, 10); ctx.lineTo(30, 15); ctx.lineTo(20, 20);
-            ctx.lineTo(15, 30); ctx.lineTo(10, 20); ctx.lineTo(0, 15); ctx.lineTo(10, 10); ctx.fill();
-        });
-    }
+        <div id="quiz-modal">
+            <h3 id="quiz-title">关卡挑战！</h3>
+            <p id="quiz-question">问题加载中...</p>
+            <div id="quiz-options"></div>
+            <p id="message"></p>
+        </div>
+    </div>
 
-    create() {
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
-        this.key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
-        this.key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
+    <p>使用键盘 <strong>W, A, S, D</strong> 或 <strong>方向键</strong> 控制细菌移动。</p>
 
-        this.uiText = this.add.text(16, 16, '', { fontSize: '24px', fill: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: 4 }).setDepth(10);
-        this.progressText = this.add.text(16, 50, '', { fontSize: '18px', fill: '#ffd700', stroke: '#000', strokeThickness: 3 }).setDepth(10);
-        
-        // 答题界面 UI
-        this.quizContainer = this.add.container(400, 300).setDepth(20).setVisible(false);
-        let quizBg = this.add.rectangle(0, 0, 600, 250, 0x000000, 0.95).setStrokeStyle(4, 0xffd700);
-        this.quizTitle = this.add.text(0, -90, '答题时间!', { fontSize: '24px', fill: '#ffd700', fontStyle: 'bold' }).setOrigin(0.5);
-        this.quizText = this.add.text(0, -30, 'Question', { fontSize: '20px', fill: '#fff', align: 'center', wordWrap: { width: 550 } }).setOrigin(0.5);
-        this.optionsText = this.add.text(0, 40, 'Options', { fontSize: '18px', fill: '#aaa', align: 'center' }).setOrigin(0.5);
-        this.hintText = this.add.text(0, 100, '(按数字键 1, 2, 或 3 回答)', { fontSize: '14px', fill: '#555' }).setOrigin(0.5);
-        this.quizContainer.add([quizBg, this.quizTitle, this.quizText, this.optionsText, this.hintText]);
+    <script>
+        // --- 游戏状态变量 ---
+        let bacX = 235;
+        let bacY = 50;
+        let health = 100;
+        let isLocked = false; // 是否正在答题锁定移动
+        let currentStage = 0; // 0:口腔到食道, 1:食道到胃, 2:胃到小肠
 
-        this.buildLevel();
-    }
+        // --- 获取DOM元素 ---
+        const bacteria = document.getElementById('bacteria');
+        const healthDisplay = document.getElementById('health');
+        const locationDisplay = document.getElementById('location');
+        const modal = document.getElementById('quiz-modal');
+        const questionText = document.getElementById('quiz-question');
+        const optionsDiv = document.getElementById('quiz-options');
+        const messageText = document.getElementById('message');
 
-    buildLevel() {
-        if (this.currentLevel >= quizData.length) {
-            this.uiText.setText("恭喜你！成功排出了体外！");
-            this.progressText.setText("你已经掌握了消化系统的知识！");
-            this.physics.pause();
-            return;
-        }
-
-        this.starsCollected = 0;
-        let levelInfo = quizData[this.currentLevel];
-        
-        this.uiText.setText(levelInfo.organ);
-        this.updateProgressText();
-
-        this.tweens.killAll();
-        if (this.platforms) this.platforms.clear(true, true);
-        if (this.hazards) this.hazards.clear(true, true);
-        if (this.starsGroup) this.starsGroup.clear(true, true);
-        if (this.movingPlatforms) this.movingPlatforms.clear(true, true);
-        if (this.bouncyPlatforms) this.bouncyPlatforms.clear(true, true);
-        if (this.fallingHazards) this.fallingHazards.clear(true, true);
-        if (this.player) this.player.destroy();
-
-        // 创建碰撞组
-        this.platforms = this.physics.add.staticGroup();
-        this.hazards = this.physics.add.staticGroup();
-        this.bouncyPlatforms = this.physics.add.staticGroup();
-        this.starsGroup = this.physics.add.staticGroup();
-        this.movingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
-        this.fallingHazards = this.physics.add.group({ allowGravity: false });
-
-        // --- 关卡布局 ---
-        this.platforms.create(400, 580, 'platform').setScale(6, 1).refreshBody(); // 地面
-        this.platforms.create(80, 500, 'platform'); // 起点平台
-        
-        // 障碍 1: 落下的酸液
-        this.hazards.create(250, 560, 'hazard');
-        let drop = this.fallingHazards.create(250, 50, 'dropHazard');
-        this.tweens.add({ targets: drop, y: 550, duration: 1200, ease: 'Linear', repeat: -1, onRepeat: () => { drop.y = 50; } });
-
-        // 障碍 2: 移动的肌肉平台
-        let mPlat = this.movingPlatforms.create(350, 420, 'movePlat');
-        mPlat.setVelocityX(100);
-        this.tweens.add({ targets: mPlat.body.velocity, x: -100, duration: 2000, yoyo: true, repeat: -1 });
-
-        // 障碍 3: 弹跳绒毛平台
-        this.bouncyPlatforms.create(550, 350, 'bouncePlat');
-
-        // 高处平台
-        this.platforms.create(700, 150, 'platform');
-
-        // 放置星星/问题触发器
-        this.starsGroup.create(250, 400, 'star'); 
-        this.starsGroup.create(400, 380, 'star'); 
-        this.starsGroup.create(700, 100, 'star'); 
-
-        // 玩家 (细菌)
-        this.player = this.physics.add.sprite(50, 400, 'bacterium');
-        this.player.setCollideWorldBounds(true);
-
-        // 物理碰撞
-        this.physics.add.collider(this.player, this.platforms);
-        this.physics.add.collider(this.player, this.movingPlatforms);
-        this.physics.add.collider(this.player, this.bouncyPlatforms, (player, platform) => {
-            if (player.body.touching.down && platform.body.touching.up) {
-                player.setVelocityY(-650); // 超级弹跳
+        // --- 题库与触发坐标 ---
+        // Y坐标(triggerY)表示细菌往下走到哪里会触发问题
+        const stages = [
+            {
+                name: "食道入口",
+                triggerY: 150, 
+                question: "我们在咀嚼馒头时感觉越来越甜，是因为唾液里含有什么？",
+                options: ["A. 胃蛋白酶", "B. 唾液淀粉酶", "C. 胆汁"],
+                correctAnswer: 1, // 数组索引，1代表B
+                hint: "想想‘唾液’里藏着什么对付淀粉的武器？"
+            },
+            {
+                name: "贲门 (进入胃部)",
+                triggerY: 350,
+                question: "胃液呈强酸性，它主要初步消化哪种营养物质？",
+                options: ["A. 脂肪", "B. 维生素", "C. 蛋白质"],
+                correctAnswer: 2,
+                hint: "吃肉比较扛饿，因为它们主要在这里被处理哦！"
+            },
+            {
+                name: "幽门 (进入小肠)",
+                triggerY: 520,
+                question: "小肠内壁的环形皱襞和小肠绒毛，主要是为了什么？",
+                options: ["A. 增加消化液分泌", "B. 增加吸收面积", "C. 加快蠕动速度"],
+                correctAnswer: 1,
+                hint: "这么多细小的绒毛，是为了接触到更多的营养。"
             }
+        ];
+
+        // --- 键盘移动控制 ---
+        document.addEventListener('keydown', (e) => {
+            if (isLocked) return; // 锁定状态下无法移动
+
+            const speed = 15;
+            switch(e.key) {
+                case 'w': case 'W': case 'ArrowUp':
+                    bacY = Math.max(0, bacY - speed);
+                    break;
+                case 's': case 'S': case 'ArrowDown':
+                    bacY = Math.min(670, bacY + speed);
+                    break;
+                case 'a': case 'A': case 'ArrowLeft':
+                    bacX = Math.max(0, bacX - speed);
+                    break;
+                case 'd': case 'D': case 'ArrowRight':
+                    bacX = Math.min(470, bacX + speed);
+                    break;
+            }
+            updatePosition();
+            checkCheckpoints();
         });
 
-        this.physics.add.overlap(this.player, this.hazards, this.hitHazard, null, this);
-        this.physics.add.overlap(this.player, this.fallingHazards, this.hitHazard, null, this);
-        this.physics.add.overlap(this.player, this.starsGroup, this.hitStar, null, this);
-    }
-
-    updateProgressText() {
-        this.progressText.setText(`已回答问题: ${this.starsCollected} / 3`);
-    }
-
-    update() {
-        if (this.isQuizActive) return;
-        if (!this.player || !this.player.body) return;
-
-        // 移动逻辑
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-200);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(200);
-        } else {
-            this.player.setVelocityX(0);
+        function updatePosition() {
+            bacteria.style.top = bacY + 'px';
+            bacteria.style.left = bacX + 'px';
+            
+            // 更新界面位置文本显示
+            if(bacY < 150) locationDisplay.innerText = "口腔";
+            else if(bacY < 350) locationDisplay.innerText = "食道";
+            else if(bacY < 520) locationDisplay.innerText = "胃部";
+            else locationDisplay.innerText = "肠道";
         }
 
-        let isGrounded = this.player.body.touching.down || this.player.body.blocked.down;
-        if (isGrounded) this.canDoubleJump = true;
-
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
-            if (isGrounded) {
-                this.player.setVelocityY(-400);
-            } else if (this.canDoubleJump) {
-                this.player.setVelocityY(-350);
-                this.canDoubleJump = false;
-            }
-        }
-    }
-
-    hitHazard() {
-        this.player.setPosition(50, 400);
-        this.player.setVelocity(0, 0);
-        this.cameras.main.shake(200, 0.01);
-    }
-
-    hitStar(player, star) {
-        this.isQuizActive = true;
-        this.activeStar = star;
-        this.physics.pause();
-        
-        let qData = quizData[this.currentLevel].questions[this.starsCollected];
-        this.quizText.setText(qData.q);
-        this.optionsText.setText(qData.options.join('\n\n'));
-        this.quizContainer.setVisible(true);
-    }
-
-    handleQuizInput() {
-        let qData = quizData[this.currentLevel].questions[this.starsCollected];
-        let answered = 0;
-
-        if (Phaser.Input.Keyboard.JustDown(this.key1)) answered = 1;
-        if (Phaser.Input.Keyboard.JustDown(this.key2)) answered = 2;
-        if (Phaser.Input.Keyboard.JustDown(this.key3)) answered = 3;
-
-        if (answered !== 0) {
-            this.quizContainer.setVisible(false);
-            this.isQuizActive = false;
-
-            if (answered === qData.correct) {
-                this.activeStar.destroy();
-                this.starsCollected++;
-                this.updateProgressText();
-                
-                if (this.starsCollected >= 3) {
-                    this.currentLevel++;
-                    this.buildLevel();
-                } else {
-                    this.physics.resume();
+        // --- 检查是否触发答题 ---
+        function checkCheckpoints() {
+            if (currentStage < stages.length) {
+                let stageData = stages[currentStage];
+                // 如果细菌向下移动超过了触发线
+                if (bacY >= stageData.triggerY) {
+                    triggerQuiz(stageData);
                 }
-            } else {
-                // 答错惩罚：画面震动并退回上一关！
-                this.cameras.main.shake(300, 0.02);
-                if (this.currentLevel > 0) this.currentLevel--;
-                
-                setTimeout(() => {
-                    this.physics.resume();
-                    this.buildLevel();
-                }, 400);
             }
         }
-    }
-}
 
-// 注意这里：transparent: true 确保背景图片能透过来
-const config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    parent: 'game-container',
-    transparent: true, 
-    physics: { default: 'arcade', arcade: { gravity: { y: 800 }, debug: false } },
-    scene: [MainScene]
-};
+        // --- 触发答题弹窗 ---
+        function triggerQuiz(stageData) {
+            isLocked = true; // 锁定移动
+            messageText.innerText = "";
+            questionText.innerText = stageData.question;
+            optionsDiv.innerHTML = ""; // 清空旧选项
 
-const game = new Phaser.Game(config);
-</script>
+            // 生成选项按钮
+            stageData.options.forEach((opt, index) => {
+                let btn = document.createElement('button');
+                btn.className = 'quiz-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index, stageData.correctAnswer, stageData.hint);
+                optionsDiv.appendChild(btn);
+            });
+
+            modal.style.display = "block";
+        }
+
+        // --- 验证答案 ---
+        function checkAnswer(selectedIndex, correctIndex, hint) {
+            if (selectedIndex === correctIndex) {
+                // 答对了
+                modal.style.display = "none";
+                isLocked = false;
+                currentStage++; // 进入下一阶段
+                // 稍微把细菌往下推一点，防止重复触发
+                bacY += 20; 
+                updatePosition();
+            } else {
+                // 答错了
+                health -= 15;
+                healthDisplay.innerText = health;
+                messageText.innerText = "哎呀，不对哦！扣除15点生命。提示：" + hint;
+                
+                if(health <= 0) {
+                    messageText.innerText = "生命值耗尽，游戏结束！请刷新页面重试。";
+                    optionsDiv.innerHTML = ""; // 移除按钮
+                }
+            }
+        }
+    </script>
 </body>
 </html>
