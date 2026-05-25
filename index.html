@@ -3,395 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digestive Parkour Adventure</title>
+    <title>Digestive Dash</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #222;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: white;
-            overflow: hidden;
-        }
-
-        #ui-bar {
-            width: 800px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-
-        #organ-title {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        #controls-hint {
-            font-size: 16px;
-            color: #aaa;
-        }
-
-        /* --- Game Area --- */
-        #game-area {
-            position: relative;
-            width: 800px;
-            height: 500px;
-            border: 4px solid white;
-            border-radius: 10px;
-            background-color: #ffb6c1; /* Default Mouth color */
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: background-color 1s ease;
-        }
-
-        /* --- Platforms --- */
-        .platform {
-            position: absolute;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 5px;
-            border-bottom: 4px solid rgba(0,0,0,0.2);
-        }
-
-        /* --- The Star (Goal) --- */
-        #star {
-            position: absolute;
-            font-size: 40px;
-            line-height: 40px;
-            width: 40px;
-            height: 40px;
-            text-align: center;
-            animation: pulse 1s infinite alternate;
-            z-index: 5;
-        }
-
-        @keyframes pulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.2); }
-        }
-
-        /* --- The Microbe (Player) --- */
-        #microbe {
-            position: absolute;
-            width: 70px;
-            height: 35px;
-            background-color: #8A2BE2;
-            border-radius: 35px;
-            border: 2px solid #4B0082;
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3);
-            z-index: 10;
-            box-sizing: border-box;
-        }
-
-        .eye { width: 10px; height: 10px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .eye::after { content: ''; width: 4px; height: 4px; background: black; border-radius: 50%; }
-        .eye-left { margin-top: -8px; transform: scale(1.2); } 
-        .eye-right { margin-top: -3px; }
-        .mouth { width: 20px; height: 7px; background: black; border-radius: 0 0 10px 10px; display: flex; justify-content: space-between; overflow: hidden; margin-top: 8px;}
-        .fang { width: 5px; height: 5px; background: white; clip-path: polygon(0 0, 100% 0, 50% 100%); }
-        .spot { position: absolute; width: 5px; height: 5px; background: #4B0082; border-radius: 50%; bottom: 5px; opacity: 0.7;}
-        .flagella { position: absolute; left: -12px; width: 15px; height: 2px; background: #8A2BE2; border-radius: 5px; }
-
-        /* --- Question Modal --- */
-        #question-modal {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            z-index: 40;
-            color: #333;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        #question-text { font-size: 26px; margin-bottom: 20px; }
-        .option-btn {
-            background: #e0e0e0; color: #333; border: 2px solid #ccc; padding: 15px 30px; margin: 10px; font-size: 18px; border-radius: 10px; cursor: pointer; width: 80%; max-width: 400px; transition: 0.2s; font-weight: bold;
-        }
-        .option-btn:hover { background: #ffdf00; border-color: #d4b900; }
-        #modal-msg { font-size: 24px; font-weight: bold; height: 30px; margin-top: 15px; }
-
-        /* --- Screen Messages --- */
-        #message-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-        }
-
-        #message-text { font-size: 40px; font-weight: bold; color: #ffdf00; margin-bottom: 20px; text-align: center; }
-
-        /* --- Confetti --- */
-        .confetti {
-            position: absolute;
-            font-size: 30px;
-            pointer-events: none;
-            animation: fall 2s ease-out forwards;
-            z-index: 50;
-        }
-
-        @keyframes fall {
-            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(500px) scale(0.5) rotate(360deg); opacity: 0; }
-        }
-
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #222; font-family: Arial, sans-serif; }
+        #game-container { box-shadow: 0 0 20px rgba(0,0,0,0.8); }
     </style>
 </head>
 <body>
 
-    <div id="ui-bar">
-        <h2 id="organ-title">Mouth</h2>
-        <div id="controls-hint">Use <b>Arrows</b> to Move | <b>Space</b> to Jump</div>
-    </div>
+<div id="game-container"></div>
 
-    <div id="game-area">
-        <div id="microbe">
-            <div class="flagella" style="top: 8px;"></div>
-            <div class="flagella" style="top: 17px; left: -15px;"></div>
-            <div class="flagella" style="top: 26px;"></div>
-            <div class="spot" style="left: 12px;"></div>
-            <div class="spot" style="left: 25px;"></div>
-            <div class="spot" style="left: 40px;"></div>
-            <div class="eye eye-left"></div>
-            <div class="mouth">
-                <div class="fang"></div>
-                <div class="fang"></div>
-            </div>
-            <div class="eye eye-right"></div>
-        </div>
+<script>
+// --- 1. QUIZ DATA ---
+const quizQuestions = [
+    {
+        organ: "Mouth & Esophagus",
+        question: "What enzyme in saliva starts breaking down carbohydrates?",
+        options: ["1) Pepsin", "2) Amylase", "3) Lipase"],
+        correct: 2
+    },
+    {
+        organ: "Stomach",
+        question: "Which strong acid is primarily found in the stomach to dissolve food?",
+        options: ["1) Sulfuric Acid", "2) Citric Acid", "3) Hydrochloric Acid"],
+        correct: 3
+    },
+    {
+        organ: "Small Intestine",
+        question: "What are the tiny, finger-like projections that absorb nutrients here?",
+        options: ["1) Villi", "2) Cilia", "3) Flagella"],
+        correct: 1
+    },
+    {
+        organ: "Large Intestine",
+        question: "What is the main function of the large intestine?",
+        options: ["1) Break down proteins", "2) Absorb water", "3) Create bile"],
+        correct: 2
+    },
+    {
+        organ: "Rectum & Anus",
+        question: "Where is waste stored right before it is expelled from the body?",
+        options: ["1) The Rectum", "2) The Appendix", "3) The Gallbladder"],
+        correct: 1
+    }
+];
 
-        <div id="star">⭐</div>
-        <div id="platform-container"></div>
+// --- 2. MAIN GAME SCENE ---
+class MainScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'MainScene' });
+        this.currentLevel = 0;
+        this.canDoubleJump = false;
+        this.isQuizActive = false;
+    }
 
-        <div id="question-modal">
-            <h2 id="question-text">Question?</h2>
-            <div id="options-container"></div>
-            <div id="modal-msg"></div>
-        </div>
+    preload() {
+        // Generating placeholder graphics
+        let canvas = this.textures.createCanvas('bacterium', 30, 30);
+        let ctx = canvas.getContext();
+        ctx.fillStyle = '#00ffaa'; // Friendly green bacteria
+        ctx.beginPath(); ctx.arc(15, 15, 15, 0, Math.PI * 2); ctx.fill();
+        canvas.refresh();
 
-        <div id="message-overlay">
-            <div id="message-text">Level Complete!</div>
-        </div>
-    </div>
+        let platCanvas = this.textures.createCanvas('platform', 200, 20);
+        let pCtx = platCanvas.getContext();
+        pCtx.fillStyle = '#aa5555'; // Flesh-colored platforms
+        pCtx.fillRect(0, 0, 200, 20);
+        platCanvas.refresh();
 
-    <script>
-        // --- Game Data, Levels, & Questions ---
-        const levels = [
-            { 
-                name: "Mouth", color: "#ffb6c1", startX: 30, startY: 300, star: [700, 150],
-                platforms: [ [0, 450, 800, 50], [200, 350, 100, 20], [400, 250, 100, 20], [600, 200, 150, 20] ],
-                question: { q: "What enzyme in the mouth starts breaking down starches?", options: ["Pepsin", "Amylase", "Bile"], a: 1 }
-            },
-            { 
-                name: "Esophagus", color: "#d6336c", startX: 50, startY: 50, star: [700, 400],
-                platforms: [ [0, 150, 150, 20], [250, 250, 100, 20], [100, 350, 100, 20], [350, 450, 150, 20], [650, 450, 150, 20] ],
-                question: { q: "What are the wave-like muscle contractions that push food down?", options: ["Gravity", "Peristalsis", "Digestion"], a: 1 }
-            },
-            { 
-                name: "Stomach", color: "#ff0000", startX: 30, startY: 200, star: [720, 100],
-                platforms: [ [0, 300, 100, 20], [150, 350, 80, 20], [300, 300, 80, 20], [450, 250, 80, 20], [600, 180, 80, 20], [700, 150, 100, 20] ],
-                question: { q: "Which strong acid is found here to break down food?", options: ["Citric acid", "Hydrochloric acid", "Lactic acid"], a: 1 }
-            },
-            { 
-                name: "Small Intestine", color: "#ff66b2", startX: 30, startY: 300, star: [50, 100],
-                platforms: [ [0, 400, 150, 20], [250, 350, 50, 20], [350, 300, 50, 20], [450, 250, 50, 20], [550, 200, 50, 20], [400, 150, 80, 20], [200, 120, 80, 20], [30, 150, 100, 20] ],
-                question: { q: "What are the tiny, finger-like projections that absorb nutrients?", options: ["Cilia", "Villi", "Flagella"], a: 1 }
-            },
-            { 
-                name: "Large Intestine", color: "#8b4513", startX: 30, startY: 300, star: [700, 350],
-                platforms: [ [0, 400, 200, 20], [300, 300, 200, 20], [600, 400, 200, 20] ],
-                question: { q: "What is the main substance absorbed back into the body here?", options: ["Protein", "Water", "Sugar"], a: 1 }
-            },
-            { 
-                name: "Rectum", color: "#5c2e0e", startX: 350, startY: 50, star: [350, 420],
-                platforms: [ [300, 150, 200, 20], [200, 250, 100, 20], [500, 350, 100, 20], [300, 470, 200, 20] ],
-                question: { q: "What does the rectum temporarily store?", options: ["Vitamins", "Urine", "Waste (Feces)"], a: 2 }
-            },
-            { 
-                name: "Anus (The Exit!)", color: "#3e1f09", startX: 50, startY: 200, star: [700, 200],
-                platforms: [ [0, 300, 100, 20], [200, 250, 100, 20], [400, 200, 100, 20], [650, 250, 150, 20] ],
-                question: { q: "What type of circular muscles control the release of waste?", options: ["Biceps", "Sphincter muscles", "Cardiac muscles"], a: 1 }
-            }
-        ];
+        let hazardCanvas = this.textures.createCanvas('hazard', 100, 20);
+        let hCtx = hazardCanvas.getContext();
+        hCtx.fillStyle = '#fffc00'; // Yellow stomach acid / toxic bad bacteria
+        hCtx.fillRect(0, 0, 100, 20);
+        hazardCanvas.refresh();
 
-        // --- Physics & Game State ---
-        let currentLevel = 0;
-        let animationFrameId;
+        let gateCanvas = this.textures.createCanvas('gateway', 40, 100);
+        let gCtx = gateCanvas.getContext();
+        gCtx.fillStyle = '#00d4ff'; // Blue energy gateway
+        gCtx.fillRect(0, 0, 40, 100);
+        gateCanvas.refresh();
+    }
+
+    create() {
+        // Controls
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
+        this.key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
+        this.key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
+
+        // UI Texts
+        this.levelText = this.add.text(16, 16, '', { fontSize: '24px', fill: '#fff' }).setDepth(10);
+        this.instructionText = this.add.text(16, 50, 'Arrows: Move | UP: Jump/Double Jump', { fontSize: '16px', fill: '#ccc' }).setDepth(10);
         
-        const player = {
-            el: document.getElementById("microbe"), x: 50, y: 50, width: 70, height: 35,
-            vx: 0, vy: 0, speed: 5, jumpPower: -12, gravity: 0.6, grounded: false
-        };
+        this.quizContainer = this.add.container(400, 300).setDepth(20).setVisible(false);
+        let quizBg = this.add.rectangle(0, 0, 600, 200, 0x000000, 0.9);
+        this.quizText = this.add.text(0, -60, 'Quiz Question', { fontSize: '20px', fill: '#fff', align: 'center', wordWrap: { width: 550 } }).setOrigin(0.5);
+        this.optionsText = this.add.text(0, 20, 'Options', { fontSize: '18px', fill: '#ffcc00', align: 'center' }).setOrigin(0.5);
+        this.quizContainer.add([quizBg, this.quizText, this.optionsText]);
 
-        const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, Space: false };
+        this.buildLevel();
+    }
 
-        const gameArea = document.getElementById("game-area");
-        const platformContainer = document.getElementById("platform-container");
-        const starEl = document.getElementById("star");
-        const uiOrganTitle = document.getElementById("organ-title");
-        const overlay = document.getElementById("message-overlay");
-        const msgText = document.getElementById("message-text");
+    buildLevel() {
+        if (this.currentLevel >= quizQuestions.length) {
+            this.levelText.setText("YOU ESCAPED! YOU WIN!");
+            this.physics.pause();
+            return;
+        }
+
+        // Clean up previous level
+        if (this.platforms) this.platforms.clear(true, true);
+        if (this.hazards) this.hazards.clear(true, true);
+        if (this.gateway) this.gateway.destroy();
+        if (this.player) this.player.destroy();
+
+        let levelData = quizQuestions[this.currentLevel];
+        this.levelText.setText(`Level ${this.currentLevel + 1}: ${levelData.organ}`);
         
-        // Modal Elements
-        const modal = document.getElementById("question-modal");
-        const qText = document.getElementById("question-text");
-        const optionsContainer = document.getElementById("options-container");
-        const modalMsg = document.getElementById("modal-msg");
+        // Background color shifts as you go deeper
+        let bgColors = ['#4a0e17', '#8a2b0d', '#611624', '#3d2010', '#1a0b06'];
+        this.cameras.main.setBackgroundColor(bgColors[this.currentLevel]);
 
-        // --- Input Handling ---
-        window.addEventListener("keydown", (e) => { if(keys.hasOwnProperty(e.code)) keys[e.code] = true; });
-        window.addEventListener("keyup", (e) => { if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+        this.platforms = this.physics.add.staticGroup();
+        this.hazards = this.physics.add.staticGroup();
 
-        // --- Level Setup ---
-        function loadLevel(index) {
-            if(index >= levels.length) { winGame(); return; }
+        // Level Design (Procedural layout for demonstration)
+        this.platforms.create(100, 500, 'platform');
+        this.platforms.create(400, 400, 'platform');
+        this.platforms.create(700, 300, 'platform');
+        this.platforms.create(400, 580, 'platform').setScale(4, 1).refreshBody(); // Floor
 
-            const lvl = levels[index];
-            gameArea.style.backgroundColor = lvl.color;
-            uiOrganTitle.innerText = lvl.name;
+        // Hazards (Acid / Bad Bacteria)
+        this.hazards.create(400, 560, 'hazard');
+        
+        // Player
+        this.player = this.physics.add.sprite(50, 400, 'bacterium');
+        this.player.setCollideWorldBounds(true);
+        this.player.setBounce(0.2);
 
-            player.x = lvl.startX; player.y = lvl.startY; player.vx = 0; player.vy = 0;
-            starEl.style.left = lvl.star[0] + "px"; starEl.style.top = lvl.star[1] + "px";
+        // Gateway to next organ
+        this.gateway = this.physics.add.sprite(750, 230, 'gateway');
+        this.gateway.setImmovable(true);
+        this.gateway.body.allowGravity = false;
 
-            platformContainer.innerHTML = "";
-            lvl.platforms.forEach(p => {
-                const pEl = document.createElement("div");
-                pEl.className = "platform";
-                pEl.style.left = p[0] + "px"; pEl.style.top = p[1] + "px";
-                pEl.style.width = p[2] + "px"; pEl.style.height = p[3] + "px";
-                platformContainer.appendChild(pEl);
-            });
+        // Collisions
+        this.physics.add.collider(this.player, this.platforms);
+        this.physics.add.overlap(this.player, this.hazards, this.hitHazard, null, this);
+        this.physics.add.overlap(this.player, this.gateway, this.triggerQuiz, null, this);
+    }
 
-            overlay.style.display = "none";
-            startGameLoop();
+    update() {
+        if (this.isQuizActive) {
+            this.handleQuizInput();
+            return;
         }
 
-        // --- Main Game Loop ---
-        function update() {
-            if (keys.ArrowLeft) player.vx = -player.speed;
-            else if (keys.ArrowRight) player.vx = player.speed;
-            else player.vx = 0;
+        if (!this.player || !this.player.body) return;
 
-            if ((keys.ArrowUp || keys.Space) && player.grounded) {
-                player.vy = player.jumpPower; player.grounded = false;
-            }
-
-            player.vy += player.gravity;
-            player.x += player.vx; player.y += player.vy;
-
-            if (player.x < 0) player.x = 0;
-            if (player.x + player.width > 800) player.x = 800 - player.width;
-
-            if (player.y > 550) {
-                player.x = levels[currentLevel].startX;
-                player.y = levels[currentLevel].startY;
-                player.vy = 0;
-            }
-
-            player.grounded = false;
-            const platforms = levels[currentLevel].platforms;
-            for (let i = 0; i < platforms.length; i++) {
-                let px = platforms[i][0], py = platforms[i][1], pw = platforms[i][2], ph = platforms[i][3];
-                if (player.vy > 0 && player.x + player.width > px && player.x < px + pw && 
-                    player.y + player.height >= py && player.y + player.height <= py + player.vy + 2) {
-                    player.grounded = true; player.vy = 0; player.y = py - player.height;
-                }
-            }
-
-            // Touching the Star Trigger
-            let sx = levels[currentLevel].star[0], sy = levels[currentLevel].star[1];
-            if (player.x < sx + 40 && player.x + player.width > sx &&
-                player.y < sy + 40 && player.y + player.height > sy) {
-                triggerQuestion();
-                return; // Pauses loop
-            }
-
-            player.el.style.left = player.x + "px"; player.el.style.top = player.y + "px";
-            animationFrameId = requestAnimationFrame(update);
+        // Parkour Movement Logic
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-200);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(200);
+        } else {
+            this.player.setVelocityX(0);
         }
 
-        function startGameLoop() { cancelAnimationFrame(animationFrameId); update(); }
-
-        // --- Question Logic ---
-        function triggerQuestion() {
-            cancelAnimationFrame(animationFrameId); // Freeze game
-            
-            // Clear movement keys so player doesn't fly off when modal closes
-            keys.ArrowLeft = false; keys.ArrowRight = false; keys.ArrowUp = false; keys.Space = false; 
-
-            const qData = levels[currentLevel].question;
-            qText.innerText = qData.q;
-            modalMsg.innerText = ""; // Clear old messages
-            optionsContainer.innerHTML = "";
-            
-            qData.options.forEach((opt, index) => {
-                const btn = document.createElement("button");
-                btn.className = "option-btn"; btn.innerText = opt;
-                btn.onclick = () => checkAnswer(index, qData.a);
-                optionsContainer.appendChild(btn);
-            });
-            
-            modal.style.display = "flex";
+        // Jump and Double Jump
+        let isGrounded = this.player.body.touching.down;
+        if (isGrounded) {
+            this.canDoubleJump = true;
         }
 
-        function checkAnswer(selectedIndex, correctIndex) {
-            if(selectedIndex === correctIndex) {
-                modal.style.display = "none";
-                levelComplete();
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+            if (isGrounded) {
+                this.player.setVelocityY(-400); // First jump
+            } else if (this.canDoubleJump) {
+                this.player.setVelocityY(-350); // Double jump
+                this.canDoubleJump = false;
+            }
+        }
+    }
+
+    hitHazard() {
+        // Punishment: Teleport to start of the level
+        this.player.setPosition(50, 400);
+        this.player.setVelocity(0, 0);
+        this.cameras.main.shake(200, 0.01); // Quick screen shake effect
+    }
+
+    triggerQuiz() {
+        this.isQuizActive = true;
+        this.physics.pause();
+        this.player.setTint(0x555555);
+
+        let qData = quizQuestions[this.currentLevel];
+        this.quizText.setText(`WARNING: GATEWAY BLOCKED!\n\n${qData.question}`);
+        this.optionsText.setText(`${qData.options.join('\n')}\n\n(Press 1, 2, or 3)`);
+        this.quizContainer.setVisible(true);
+    }
+
+    handleQuizInput() {
+        let qData = quizQuestions[this.currentLevel];
+        let answered = 0;
+
+        if (Phaser.Input.Keyboard.JustDown(this.key1)) answered = 1;
+        if (Phaser.Input.Keyboard.JustDown(this.key2)) answered = 2;
+        if (Phaser.Input.Keyboard.JustDown(this.key3)) answered = 3;
+
+        if (answered !== 0) {
+            this.quizContainer.setVisible(false);
+            this.isQuizActive = false;
+            this.physics.resume();
+            this.player.clearTint();
+
+            if (answered === qData.correct) {
+                // Correct: Advance to next level
+                this.currentLevel++;
+                this.buildLevel();
             } else {
-                modalMsg.innerText = "Try Again! ❌";
-                modalMsg.style.color = "#ff3333";
+                // Incorrect: Punishment (Reset to start of level)
+                this.player.setPosition(50, 400);
+                this.player.setVelocity(0, 0);
+                // Optional: Add a text popup saying "Wrong! Try again."
             }
         }
+    }
+}
 
-        // --- Transitions ---
-        function levelComplete() {
-            triggerConfetti(20);
-            overlay.style.display = "flex";
-            msgText.innerText = "Correct! Organ Cleared! 🎉";
-            msgText.style.color = "#00ff00";
-
-            setTimeout(() => { currentLevel++; loadLevel(currentLevel); }, 2000);
+// --- 3. GAME CONFIGURATION ---
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    parent: 'game-container',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 800 },
+            debug: false
         }
+    },
+    scene: [MainScene]
+};
 
-        function winGame() {
-            uiOrganTitle.innerText = "You Survived the Digestive Tract!";
-            overlay.style.display = "flex";
-            msgText.innerText = "You Win! 🏆";
-            msgText.style.color = "#ffdf00";
-            setInterval(() => triggerConfetti(5), 300);
-        }
-
-        function triggerConfetti(amount) {
-            for(let i=0; i<amount; i++) {
-                const piece = document.createElement("div");
-                piece.innerText = "🎉"; piece.className = "confetti";
-                piece.style.left = (Math.random() * 100) + "%"; piece.style.top = "-50px";
-                gameArea.appendChild(piece);
-                setTimeout(() => piece.remove(), 2000);
-            }
-        }
-
-        // Start
-        loadLevel(currentLevel);
-
-    </script>
+const game = new Phaser.Game(config);
+</script>
 </body>
 </html>
